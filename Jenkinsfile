@@ -16,7 +16,7 @@ pipeline {
         stage('Build Docker Image') {
             steps {
                 script {
-                    dockerImage = docker.build("${IMAGE_NAME}:${IMAGE_TAG}")
+                    sh "docker build -t ${IMAGE_NAME}:${IMAGE_TAG} ."
                 }
             }
         }
@@ -24,6 +24,10 @@ pipeline {
         stage('Run Docker Container') {
             steps {
                 script {
+                    // Stop and remove if already running
+                    sh "docker stop flask_container || true"
+                    sh "docker rm flask_container || true"
+
                     sh "docker run -d -p 5555:5555 --name flask_container ${IMAGE_NAME}:${IMAGE_TAG}"
                 }
             }
@@ -32,8 +36,7 @@ pipeline {
         stage('Test Container') {
             steps {
                 script {
-                    // Give the container a few seconds to start
-                    sleep 5
+                    sleep 5 // Give the container time to start
                     sh "curl -f http://localhost:5555 || echo 'App did not start correctly'"
                 }
             }
